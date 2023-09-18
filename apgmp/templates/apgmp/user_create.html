@@ -1,0 +1,211 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Maintenance Management</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/select2.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/select2-bootstrap4.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/select2-bootstrap.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    
+
+    <style>
+      .button-wrapper {
+          display: flex;
+          justify-content: center;
+      }
+      
+      .button-wrapper button {
+          margin: 2px; 
+      }
+
+      .form-control {
+        width: 600px; /* Adjust the width as per your requirement */
+      }
+      
+      .form-select {
+        width: 600px; /* Adjust the width as per your requirement */
+      }
+      
+      .subcard {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 50px; 
+    }
+
+    .messages {
+      margin-top: 40px;
+      margin-bottom: -10px;
+  }
+
+  .messages li {
+      color: red; /* Change to your desired text color */
+  }
+
+
+
+
+  </style>
+</head>
+
+<body style="background-color: #C2DEDC;">
+  <div class="mainwrapper">
+    <div class="grid-container">
+        <div class="navwrapper">
+            <div class="column">
+                {% include 'apgmp/navbar.html' %}
+            </div>
+        </div>
+        <div class="pagewrapper">
+            <div class="column">
+              <form method="post" action="{% url 'user_create' %}">
+                  {% csrf_token %}
+                    <div class="card border-dark mt-2 ms-2 me-2 mb-4">
+                        <div class="card-header">Ajouter un nouvel utilisateur :</div>
+                        <div class="subcard">
+                            <div class="form-group">
+                                <label for="lname" class="form-label mt-4">Nom :</label>
+                                <input type="text" class="form-control" id="lname" name="lname">
+                            </div>
+                            <div class="form-group">
+                                <label for="fname" class="form-label mt-4">Prénom :</label>
+                                <input type="text" class="form-control" id="fname" name="fname">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="role" class="form-label mt-4">Rôle :</label>
+                                <div class="col-sm-10">
+                                    <select class="form-select" id="role" name="role">
+                                        <option>Technicien</option>
+                                        <option>Organisateur</option>
+                                    </select>
+                                </div>
+                            </div>
+
+
+
+                            <div class="form-group">
+                              <label for="group" class="form-label mt-4">Groupe :</label>
+                              <div class="col-sm-10">
+                                  <select class="js-example-basic-multiple form-control" name="group" multiple="multiple">
+                                  </select>
+                              </div>
+                          </div>
+                          
+
+                            <div class="form-group">
+                                <label for="username" class="form-label mt-4">Matricule :</label>
+                                <input type="text" class="form-control" id="username" name="username">
+                                {% if form.errors.username %}
+                                <div class="text-danger">{{ form.errors.username }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="password" class="form-label mt-4">Mot de passe</label>
+                                <input type="text" class="form-control" id="password" name="password">
+                            </div>
+
+                            {% if messages %}
+                            <ul class="messages">
+                                {% for message in messages %}
+                                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+
+
+                        </div>
+                    </div>
+                    <div class="button-wrapper">
+                      <button type="submit" class="btn btn-primary" id="submitButton">Soumettre</button>
+                      <button type="button" class="btn btn-secondary" id="cancelButton">Annuler</button>
+                  </div>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+</div>  
+</body>
+ 
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+<script>
+  $(document).ready(function() {
+    
+
+
+    
+    function loadGroups() {
+      $.ajax({
+          url: '/group_load/',
+          type: 'GET',
+          dataType: 'json',
+          success: function(response) {
+              const groups = response.groups;
+ 
+
+
+              const selectElement = $('select[name="group"]');
+
+              for (const group of groups) {
+                const option = new Option(group.groupid, group.id, false, false);
+                selectElement.append(option);
+              }
+              selectElement.select2({
+                theme: 'classic', 
+                placeholder: 'Sélectionner un groupe',
+              });
+
+
+
+
+          },
+          error: function(xhr, status, error) {
+          }
+      });
+  }
+
+    loadGroups();
+
+    function updateGroupVisibility() {
+      const roleSelect = $('#role');
+      const groupeSelect = $('select[name="group"]');
+      const selectedRole = roleSelect.val();
+
+      if (selectedRole === "Organisateur") {
+        groupeSelect.closest('.form-group').hide(); 
+      } else {
+        groupeSelect.closest('.form-group').show(); 
+      }
+    }
+
+    updateGroupVisibility();
+
+    $('#role').on('change', function() {
+      updateGroupVisibility();
+    });
+
+
+
+
+
+    
+    $('#submitButton').click(function() {
+
+      $('form').submit();
+    });
+  
+    $('#cancelButton').click(function() {
+      window.location.href = "{% url 'index' %}";
+    });
+  });
+</script>
+</html>

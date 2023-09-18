@@ -1,0 +1,157 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+
+<head>
+  <title>Maintenance Management</title>
+  <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+
+  <style>
+    
+      .card-container {
+          grid-area: cards;
+          display: flex;
+          margin-left: 20px;
+          margin-right: 20px;
+          margin-top: 20px;
+          flex-wrap: wrap;
+          justify-content: flex-start;
+      }
+
+
+
+      .card-item {
+        flex: 0 0 calc(25% - 10px);
+        margin: 5px;
+        min-width: 160px; /* Set the minimum width you desire for the cards */
+        max-width: calc(25% - 10px);
+      }
+  
+      @media (max-width: 768px) {
+        .card-item {
+          flex: 0 0 calc(50% - 10px);
+          max-width: calc(50% - 10px);
+        }
+      }
+  
+      @media (max-width: 576px) {
+        .card-item {
+          flex: 0 0 100%;
+          max-width: 100%;
+        }
+      }
+
+      .workorder-count {
+          font-size: 35px;
+      }
+
+      .mainindexwrapper {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, min(500px, 1fr));
+      }
+
+      .cardswrapper {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, min(340px, 1fr));
+      }
+  </style>
+</head>
+
+
+
+
+<body style="background-color: #C2DEDC;">
+
+  <div class="mainindexwrapper">
+
+    <div class="grid-container">
+        <div class="navwrapper">
+            <div class="column">
+                {% include 'apgmp/navbar.html' %}
+            </div>
+        </div>
+            
+        <div class="cardswrapper">
+            <div class="column">
+                <div class="card-container">
+                    <div class="card border-primary mb-3 card-item">
+                        <div class="card-body">
+                          <h5 class="card-title"><strong><a href="/" style="text-decoration: none; color: inherit;">Ordres de maintenance curative</a></strong></h5>
+                          <p class="card-text"></p>
+                        </div>
+                    </div>
+                    <div class="card border-primary mb-3 card-item" id="workordercard">
+                        <div class="card-body">
+                          <h5 class="card-title"><strong><a href="/selector" style="text-decoration: none; color: inherit;">Ordres de maintenance préventive</a></strong></h5>
+               
+                          <p class="card-text">
+                            <span id="workorders-count" class="workorder-count">Loading...</span>
+                            <span class="label">&nbsp;ordres à réaliser.</span>
+                          </p>
+
+                        </div>
+                    </div>
+                    <div class="card border-primary mb-3 card-item">
+                        <div class="card-body">
+                          <h5 class="card-title"><strong><a href="/" style="text-decoration: none; color: inherit;">Manuels d'équipement</a></strong></h5>
+                        </div>
+                    </div>
+                    <div class="card border-primary mb-3 card-item" id="manageordercard">
+                        <div class="card-body">
+                          <h5 class="card-title"><strong><a href="/adminopanel" style="text-decoration: none; color: inherit;">Géstion des ordres de maintenance préventive</a></strong></h5>
+                        </div>
+                    </div>
+                    <div class="card border-primary mb-3 card-item" id="manageusercard">
+                      <div class="card-body">
+                        <h5 class="card-title"><strong><a href="/adminupanel" style="text-decoration: none; color: inherit;">Géstion des utilisateurs</a></strong></h5>
+                      </div>
+                    </div>
+                    
+                    
+
+                    <a href="/">
+
+
+                </div>
+            </div>    
+        </div>        
+      </div>          
+    </div>        
+
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+    const isIssuer = '{{ request.user.userprofile.is_issuer }}' === 'True';
+    console.log(isIssuer)
+    if (isIssuer) {
+      $('#workordercard').hide();
+  } else {
+    $('#manageusercard').hide();
+    $('#manageordercard').hide();
+
+    $.ajax({
+      url: '/reduced_orders_load/',
+      type: 'GET',
+      dataType: 'json',
+      success: function(response) {
+        const orders = response.orders;
+        const ordersCount = orders.length; // Get the length of the work orders array
+        $('#workorders-count').text(ordersCount);
+      },
+      error: function(xhr, status, error) {
+        console.error(error);
+        $('#workorders-count').html('Error loading work orders.');
+            }
+        });
+    }
+});
+</script>
+
+
+
+</html>

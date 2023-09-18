@@ -1,0 +1,139 @@
+<style>
+  .filterwrapper {
+    margin-left: 10px;
+    margin-right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: right;
+    flex-wrap: wrap;
+  }
+
+  .form-control {
+    width: 400px;
+  }
+
+  .button-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .button-wrapper button {
+    margin: 2px;
+  }
+
+  .offcanvas {
+    --bs-offcanvas-height: var(--filterwrapper-height);
+  }
+
+
+
+</style>
+
+
+<div class="offcanvas offcanvas-top" tabindex="-1" id="fequipment" aria-labelledby="fequipment">
+  <div class="offcanvas-body">
+    <div class="filterwrapper">
+      <div class="form-group">
+        <label class="col-form-label" for="inventorynr">Ref. d'équipement :</label>
+        <input type="text" class="form-control" placeholder="Ref. d'équipement" id="inventorynr">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="nomenclature">Équipement :</label>
+        <input type="text" class="form-control" placeholder="Équipement" id="nomenclature">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="functlocation">Loc. fonctionnelle :</label>
+        <input type="text" class="form-control" placeholder="Loc. fonctionnelle" id="functlocation">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="modelnumber">Ref. de modèle :</label>
+        <input type="text" class="form-control" placeholder="Ref. de modèle" id="modelnumber" pattern="[0-9]{2}" maxlength="2" size="2" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="manufactserialnr">Numéro de serie :</label>
+        <input type="text" class="form-control" placeholder="Numéro de serie" id="manufactserialnr">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="inventoryref">Ref. d'inventaire :</label>
+        <input type="text" class="form-control" placeholder="Ref. d'inventaire" id="inventoryref">
+      </div>
+
+
+
+
+
+
+    </div>
+
+
+    
+    
+
+    <div class="button-wrapper" style="margin-top: 5px;">
+      <button type="button" class="btn btn-primary custom-button" data-bs-dismiss="offcanvas" onclick="captureFilterData()">Appliquer</button>
+      <button type="button" class="btn btn-secondary custom-button" onclick="resetFilter()">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const filterWrapper = document.querySelector('.filterwrapper');
+  const offcanvas = document.getElementById('fequipment');
+
+  function adjustOffcanvasHeight() {
+    const filterWrapperHeight = filterWrapper.offsetHeight + 120;
+    offcanvas.style.setProperty('--bs-offcanvas-height', `${filterWrapperHeight}px`);
+  }
+
+  window.addEventListener('resize', adjustOffcanvasHeight);
+  window.addEventListener('load', adjustOffcanvasHeight);
+
+  
+  document.getElementById('modelnumber').addEventListener('input', function() {
+    const semaineValue = parseInt(this.value);
+    if (semaineValue > 52) {
+      this.value = '52';
+    }
+  });
+
+
+
+  function captureFilterData() {
+    const inventorynr = document.getElementById('inventorynr').value;
+    const nomenclature = document.getElementById('nomenclature').value;
+    const functlocation = document.getElementById('functlocation').value;
+    const modelnumber = document.getElementById('modelnumber').value;
+    const manufactserialnr = document.getElementById('manufactserialnr').value;
+    const inventoryref = document.getElementById('inventoryref').value;
+
+    
+
+    const filterDataEvent = new CustomEvent('filterDataChanged', { detail: { inventorynr, nomenclature, functlocation, modelnumber, manufactserialnr, inventoryref } });
+    
+
+
+
+    window.dispatchEvent(filterDataEvent);
+  }
+
+  function resetFilter() {
+    document.getElementById('inventorynr').value = '';
+    document.getElementById('nomenclature').value = '';
+    document.getElementById('functlocation').value = '';
+    document.getElementById('modelnumber').value = '';
+    document.getElementById('manufactserialnr').value = '';
+    document.getElementById('inventoryref').value = '';
+
+    const inventorynr = document.getElementById('inventorynr').value;
+    const nomenclature = document.getElementById('nomenclature').value;
+    const functlocation = document.getElementById('functlocation').value;
+    const modelnumber = document.getElementById('modelnumber').value;
+    const manufactserialnr = document.getElementById('manufactserialnr').value;
+    const inventoryref = document.getElementById('inventoryref').value;
+    const filterDataEvent = new CustomEvent('filterDataChanged', { detail: { inventorynr, nomenclature, functlocation, modelnumber, manufactserialnr, inventoryref } });
+    window.dispatchEvent(filterDataEvent);
+  }
+</script>
+
+
+

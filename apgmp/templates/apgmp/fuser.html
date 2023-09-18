@@ -1,0 +1,96 @@
+<style>
+  .filterwrapper {
+    margin-left: 10px;
+    margin-right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: right;
+    flex-wrap: wrap;
+  }
+
+  .form-control {
+    width: 400px;
+  }
+
+  .button-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .button-wrapper button {
+    margin: 2px;
+  }
+
+  .offcanvas {
+    --bs-offcanvas-height: var(--filterwrapper-height);
+  }
+</style>
+
+
+<div class="offcanvas offcanvas-top" tabindex="-1" id="fuser" aria-labelledby="fuser">
+  <div class="offcanvas-body">
+    <div class="filterwrapper">
+      <div class="form-group">
+        <label class="col-form-label" for="regNumber">Matricule :</label>
+        <input type="text" class="form-control" placeholder="Matricule" id="regNumber">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="name">Nom :</label>
+        <input type="text" class="form-control" placeholder="Nom" id="name">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="group">Groupe :</label>
+        <input type="text" class="form-control" placeholder="Groupe" id="group">
+      </div>
+      <div class="form-group">
+        <label class="col-form-label" for="role">Rôle :</label>
+        <input type="text" class="form-control" placeholder="Rôle" id="role">
+      </div>
+    </div>
+
+    <div class="button-wrapper" style="margin-top: 20px;">
+      <button type="button" class="btn btn-primary custom-button" data-bs-dismiss="offcanvas" onclick="captureFilterData()">Appliquer</button>
+      <button type="button" class="btn btn-secondary custom-button" onclick="resetFilter()">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const filterWrapper = document.querySelector('.filterwrapper');
+  const offcanvas = document.getElementById('fuser');
+
+  function adjustOffcanvasHeight() {
+    const filterWrapperHeight = filterWrapper.offsetHeight + 100;
+    offcanvas.style.setProperty('--bs-offcanvas-height', `${filterWrapperHeight}px`);
+  }
+
+  window.addEventListener('resize', adjustOffcanvasHeight);
+  window.addEventListener('load', adjustOffcanvasHeight);
+
+
+
+
+  function captureFilterData() {
+    const regNumber = document.getElementById('regNumber').value;
+    const name = document.getElementById('name').value;
+    const group = document.getElementById('group').value;
+    const role = document.getElementById('role').value;
+    const filterDataEvent = new CustomEvent('filterDataChanged', { detail: { regNumber, name, group, role } });
+
+    window.dispatchEvent(filterDataEvent);
+  }
+
+  function resetFilter() {
+    document.getElementById('regNumber').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('group').value = '';
+    document.getElementById('role').value = '';
+
+    const regNumber = document.getElementById('regNumber').value;
+    const name = document.getElementById('name').value;
+    const group = document.getElementById('group').value;
+    const role = document.getElementById('role').value;
+    const filterDataEvent = new CustomEvent('filterDataChanged', { detail: { regNumber, name, group, role } });
+    window.dispatchEvent(filterDataEvent);
+  }
+</script>

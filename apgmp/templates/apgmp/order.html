@@ -1,0 +1,758 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <title>Maintenance Management</title>
+      <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+      <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+      <style>
+         .no-bullet {
+         list-style-type: none;
+         }
+         .button-wrapper {
+         display: flex;
+         justify-content: center;
+         }
+         .button-wrapper button {
+         margin: 2px; 
+         }
+      </style>
+   </head>
+   <body style="background-color: #C2DEDC;">
+      <div class="mainwrapper">
+         <div class="grid-container">
+            <div class="navwrapper">
+               <div class="column">
+                  {% include 'apgmp/navbar.html' %}
+               </div>
+            </div>
+            <div class="pagewrapper">
+               <div class="column">
+                  <div class="card border-dark mt-2 ms-2 me-2 mb-2 pb-2">
+                     <div id="container" class="container">
+                        <table style="width: 100%; font-size: 20px;  line-height: 2;">
+                           <tbody>
+                              <tr>
+                                 <td style="width: 40%;">
+                                    <strong style="font-size: 28px;">Order:
+                                    <span id="orderRef" class="value" style="font-size: 28px;"></span></strong>
+                                 </td>
+                                 <td><em>Order type:</em>
+                                    <span id="orderType" class="value"></span>
+                                 </td>
+                              </tr>
+                              <tr>
+                                 <td style="width: 40%;"><strong>Start date:</strong>
+                                    <span id="startDate" class="value"></span>
+                                 </td>
+                                 <td><strong>End date:</strong>
+                                    <span id="endDate" class="value"></span>
+                                 </td>
+                              </tr>
+                              <tr>
+                                 <td style="width: 40%;"><strong>Functional location:</strong>
+                                    <span id="functLocation" class="value"></span>
+                                 </td>
+                              </tr>
+                              <tr>
+                                 <td><strong>Equipment:</strong>
+                                    <span id="equipment" class="value"></span>
+                                 </td>
+                              </tr>
+                              <tr>
+                                 <td style="width: 40%;"><strong>Model number:</strong>
+                                    <span id="modelNumber" class="value"></span>
+                                 </td>
+                                 <td><strong>Manufacturer Serial number:</strong>
+                                    <span id="manufactSerialNr" class="value"></span>
+                                 </td>
+                              </tr>
+                              <tr>
+                                 <td><strong>Inventory number:</strong>
+                                    <span id="inventoryNr" class="value"></span>
+                                 </td>
+                                 <td><strong>Planned time:</strong>
+                                    <span id="plannedTime" class="value"></span>
+                                 </td>
+                              </tr>
+                              <tr>
+                                 <td><strong>PM planner grp:</strong>
+                                    <span id="pmplannergrp" class="value"></span>
+                                 </td>
+                                 <td><strong>Inspection lot:</strong>
+                                    <span id="inspectionLot" class="value"></span>
+                                 </td>
+                              </tr>
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+                  <form>
+                     {% csrf_token %}
+                     <div class="card border-dark mt-2 ms-2 me-2 mb-2 pb-2">
+                        <div class="card-header">Ordre du mainteance préventif</div>
+                        <table id="instructionstable" style="width: 99%; margin-left: 1%; margin-top: 1%; margin-bottom: 1%;">
+                           <tbody></tbody>
+                        </table>
+                     </div>
+                     <div class="card border-dark mt-2 ms-2 me-2 mb-2 pb-2">
+                        <div class="card-header">Plan préventif</div>
+                        <table id="extentiontable" style="width: 99%; margin-left: 1%; margin-top: 1%; margin-bottom: 1%;">
+                           <tbody></tbody>
+                        </table>
+                     </div>
+                  </form>
+                  <div class="button-wrapper" style="margin-bottom: 2%;">
+                     <button id="submit-button" type="button" class="btn btn-primary">Soumettre</button>
+                     <button id="cancel-button" type="button" class="btn btn-secondary">Annuler</button>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </body>
+</html>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script>
+   function adjustTextareaHeight(event) {
+       const textarea = event.target;
+       textarea.style.height = 'auto';
+       textarea.style.height = textarea.scrollHeight+5+'px';
+     }
+   
+   
+   function getCookie(name) {
+       let cookieValue = null;
+       if (document.cookie && document.cookie !== '') {
+           const cookies = document.cookie.split(';');
+           for (let i = 0; i < cookies.length; i++) {
+               const cookie = cookies[i].trim();
+               if (cookie.substring(0, name.length + 1) === name + '=') {
+                   cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                   break;
+               }
+           }
+       }
+       return cookieValue;
+   }
+   
+   
+   function loadOrder(ordert_id, ordert_ref) {
+       return $.ajax({
+           url: '/order_load/',
+           type: 'GET',
+           data: {
+               orderRef: ordert_ref,
+               orderId: ordert_id
+           },
+           dataType: 'json'
+       });
+   }
+   
+   function submitOrder(form_Data,ordert_id, ordert_ref) {
+       return $.ajax({
+           url: '/orderposter/',
+           type: 'POST',
+           dataType: 'json',
+           data: JSON.stringify({
+               orderId: ordert_id,
+               orderRef: ordert_ref,
+               formData: form_Data
+           }),
+           beforeSend: function(xhr, settings) {
+               const csrftoken = getCookie('csrftoken');
+               xhr.setRequestHeader('X-CSRFToken', csrftoken);
+           },
+           headers: {
+               'Content-Type': 'application/json',
+           },
+       });
+   }
+   
+   
+   $(document).ready(function() {
+       const path = window.location.pathname;
+       const pathParts = path.split("/").filter(part => part !== "");
+       const orderRef = pathParts[1];
+       const orderId = pathParts[2];
+       const objsubmitted = [];
+       const extobjsubmitted = [];
+   
+       loadOrder(orderId, orderRef)
+           .done(function(response) {
+               $('#instructionstable').empty();
+               var orderData = response.order[0];
+               const instructions = orderData.instructions;
+   
+   
+               var container = $('<div></div>');
+   
+   $('#orderRef').text(orderData.orderref);
+   $('#orderType').text(orderData.ordertype.split(' ')[0]);
+   $('#startDate').text(orderData.startdate);
+   $('#endDate').text(orderData.enddate);
+   $('#functLocation').text(orderData.functlocation.split(' ')[0]);
+   $('#equipment').text(orderData.equipment.split(' ')[1]);
+   $('#modelNumber').text(orderData.modelnumber);
+   $('#manufactSerialNr').text(orderData.manufactserialnr);
+   $('#inventoryNr').text(orderData.inventorynr);
+   $('#plannedTime').text(orderData.plannedtime);
+   $('#pmplannergrp').text(orderData.pmplannergrp);
+   $('#inspectionLot').text(orderData.inspectionlot);
+   
+               
+   
+   
+   
+               instructions.forEach(function(instruction, idxg) {
+                   
+                   const procedureName = instruction.procedure_name;
+                   const procedureType = instruction.procedure_type;
+                   const procedureInstructions = instruction.procedure_instructions;
+                   objsubmitted.push({ type: procedureType, value: [] });
+   
+                   
+                   const row = $('<tr></tr>');
+                   const procedureNameElement = $('<strong></strong>').text(procedureName);
+                   row.append(procedureNameElement);
+   
+                   if (procedureType === 2) {
+                       const textarea = $('<textarea></textarea>')
+                           .attr('rows', '4')
+                           .addClass('full-width-textarea')
+                           .attr('name', 'textarea_' + idxg)
+                           .text('1- \n2- \n3- \n4- ')
+                           .css('padding', '5px')
+                           .css('width', '97%')
+                           .css('margin-left', '2%')
+                           .attr('oninput', 'adjustTextareaHeight(event)');
+                           
+                       row.append('<br>', textarea);
+                   } else if (procedureType === 1) {
+                       const ul = $('<ul></ul>').css('list-style-type', 'none');
+                       procedureInstructions.forEach(function(instruction) {
+                           ul.append($('<li></li>').text(instruction));
+                       });
+                       row.append(ul);
+                   } else if (procedureType === 0) {
+                       const ul = $('<ul></ul>').css('list-style-type', 'none');
+                           ul.append($('<li></li>').text("Marquer OK ou NOK ou N/A"));
+                       row.append(ul);
+                   } else if (procedureType === 3) {
+                       const subtable = $('<table></table>')
+                           .css('width', '99%')
+                           .css('margin-left', '1%')
+                           .addClass('table table-hover');
+                       const subtbody = $('<tbody></tbody>');
+                       procedureInstructions.forEach(function(instruction, idxl) {
+                           const tr = $('<tr></tr>');
+                           tr.append($('<td></td>').text(instruction.operation));
+                           //subtbody.append(tr);
+                           const buttColumn = $('<td></td>')
+                               .css('width', '158px');
+                           const radioOk = $('<input>')
+                               .attr('type', 'radio')
+                               .addClass('btn-check btn-sm')
+                               .attr('name', 'But_' + idxg+'_'+idxl)
+                               .attr('id', 'ok_' + idxg+'_'+idxl)
+                               .attr('autocomplete', 'off')
+                               .val(3);
+                           const labelOk = $('<label></label>')
+                               .addClass('btn btn-outline-success btn-sm')
+                               .attr('for', 'ok_' + idxg+'_'+idxl)
+                               .text('OK');
+                           const radioNok = $('<input>')
+                               .attr('type', 'radio')
+                               .addClass('btn-check btn-sm')
+                               .attr('name', 'But_' + idxg+'_'+idxl)
+                               .attr('id', 'nok_' + idxg+'_'+idxl)
+                               .attr('autocomplete', 'off')
+                               .val(2);
+                           const labelNok = $('<label></label>')
+                               .addClass('btn btn-outline-danger btn-sm')
+                               .attr('for', 'nok_' + idxg+'_'+idxl)
+                               .text('NOK');
+                           const radioNa = $('<input>')
+                               .attr('type', 'radio')
+                               .addClass('btn-check btn-sm')
+                               .attr('name', 'But_' + idxg+'_'+idxl)
+                               .attr('id', 'na_' + idxg+'_'+idxl)
+                               .attr('autocomplete', 'off')
+                               .val(1);
+                           const labelNa = $('<label></label>')
+                               .addClass('btn btn-outline-warning btn-sm')
+                               .attr('for', 'na_' + idxg+'_'+idxl)
+                               .text('N/A');
+   
+                           labelNa.css('margin-left', '3px');
+                           labelNok.css('margin-left', '3px');
+   
+                           buttColumn.append(radioOk, labelOk, radioNok, labelNok, radioNa, labelNa);
+                           tr.append(buttColumn);
+                           subtbody.append(tr);
+                       });
+   
+                       subtable.append(subtbody);
+                       row.append(subtable);
+                   }
+   
+                   $('#instructionstable').append(row);
+               });
+   
+   
+   
+   
+               const DefaultExtensions  = [
+                   {
+                       'group': 'TE',
+                       'subgroups': [
+                           {
+                               'subgrouptitle': 'Points liés à la table de Test Et ses accessoires',
+                               'instructions': [
+                                   {'index': 1, 'instruction': 'Vérifier le nettoyage de toutes les CPs du test électrique'},
+                                   {'index': 2, 'instruction': 'Vérifier le nettoyage du filtre etde l’intérieur du testélectrique'},
+                                   {'index': 3, 'instruction': 'Vérifier l’Etat/la Fermeture des portes et la bache de couverture'},
+                                   {'index': 4, 'instruction': 'Vérifer l’Etat /la Présence des vis des CPs et le bon serrage'},
+                                   {'index': 5, 'instruction': 'Vérifier l’arrangement des fils, les cables électriques et flexibles pneumatique'},
+                                   {'index': 6, 'instruction': 'La pression d’air d’entré est de 6 bars (fuites doivent être éliminées)'},
+                                   {'index': 7, 'instruction': 'Tester les cartes de rack avec le mode ‘diagnostic’'},
+                                   {'index': 8, 'instruction': 'Tester la fonctionalité du lecteur code à barre'},
+                                   {'index': 9, 'instruction': 'Tester la fonctionnalité du compteur et du bouton start'},
+                                   {'index': 10, 'instruction': 'Vérifier l’éclairage à l’intérieur et à l’extérieur du TE'},
+                                   {'index': 11, 'instruction': 'Vérifier la présence de toutes les accessoire du TE'},
+                                   {'index': 12, 'instruction': 'Vérifier l’état de la plaque (plate surface) & Numérotation de la CP'},
+                                   {'index': 13, 'instruction': 'Relever et vérifier le compteur, s\'il atteind 850 000 Cycles, Informer le superviseur'}
+                               ]
+                           },
+                           {
+                               'subgrouptitle': 'Points liés aux CPs',
+                               'instructions': [
+                                   {'index': 14, 'instruction': 'Tester les maintients des CP & la fonctionalité du Bouton d’expulsion'},
+                                   {'index': 15, 'instruction': 'Vérifier l\'étanchiété de la CP(Pression de test ne doit pas dépasser 0.06Mpa=0.6 Bar)'},
+                                   {'index': 16, 'instruction': 'Tester la bonne détection de fuite (test d’étanchieté)'},
+                                   {'index': 17, 'instruction': 'Vérifer la fermeture des sécurité des connecteurs & le desserage des pins coding'},
+                                   {'index': 18, 'instruction': 'Vérifier l\'état, la présence, le niveau, le serrage et le type de pins de toutes les CPs'},
+                                   {'index': 19, 'instruction': 'Vérifier l’état des pin HLC, et changer s’ils sont endomagés'},
+                                   {'index': 20, 'instruction': 'Faire le nettoyage des supports des Pins à ressort Pushback de débris et tester la continuité'},
+                                   {'index': 21, 'instruction': 'Tester le bon fonctionnement des pins et des switchs de detection'},
+                                   {'index': 22, 'instruction': 'Vérifier la capabilité des ressorts push –back/ Pin à Ressort'},
+                                   {'index': 23, 'instruction': 'Vérifier l’endommagement des guidages'},
+                                   {'index': 24, 'instruction': 'Vérifier la pression des CPs ABS selon les spécifications du fournisseur'},
+                                   {'index': 25, 'instruction': 'Vérifier la fixation et l’alignement des blocs mobiles des CPs'},
+                                   {'index': 26, 'instruction': 'Vérifier l’endommagement des plaques d’ouverture des shunts pour les CPs de l’airbag'},
+                                   {'index': 27, 'instruction': 'Vérifier le bon branchement des fils de la mise à terre'}
+                               ]
+                           }
+                       ]
+                   },
+                   {
+                       'group': 'CC',
+                       'subgroups': [
+                           {
+                               'subgrouptitle': 'Table du CLIP CHECKER',
+                               'instructions': [
+                                   {'index': 1, 'instruction': 'Faire le Nettoyage de la tableau du Lay out'},
+                                   {'index': 2, 'instruction': 'Vérifier l\'Endommagement du tableau et de lay out'},
+                                   {'index': 3, 'instruction': 'Faire le nettoyage à l’intérieur du Clip checker'},
+                                   {'index': 4, 'instruction': 'Vérifier l\'Etat et la Fermeture des portes'},
+                                   {'index': 5, 'instruction': 'Vérifier la Fixation, l’endomagementet le rangement des cables et des tuyeaux'},
+                                   {'index': 6, 'instruction': 'Vérifier que la pression d’air d’entré est de 6 bars (fuites doivent être éliminées)'},
+                                   {'index': 7, 'instruction': 'Tester les cartes de rack avec le mode \'diagnostic\''},
+                                   {'index': 8, 'instruction': 'Vérifier la fonctionalité du lecteur code à barre'},
+                                   {'index': 9, 'instruction': 'Vérifier la fonctionnalité du compteur et du bouton start'},
+                                   {'index': 10, 'instruction': 'Vérifier la présence de toutes les accessoire du CLC et que l\'Eclairage est OK'},
+                                   {'index': 11, 'instruction': 'Vérifier la vérification de l’onduleur (Fonctionnement au minimum 5 min)'}
+                                   ]
+                               },
+                               {
+                                   'subgrouptitle': 'Contre-pièces et les outils d’assemblage',
+                                   'instructions': [
+   
+                                   {'index': 13, 'instruction': 'Vérifier la fixation et l\'endommagement des outils d’assemblage (fourches, …)'},
+                                   {'index': 14, 'instruction': 'Vérifier la fixation et l\'endommagement des CPs de Grommet'},
+                                   {'index': 15, 'instruction': 'Vérifier la fixation et l\'endommagement des CPs des Clips'},
+                                   {'index': 16, 'instruction': 'Vérifier les stoppers (système devérrouillage) et les vérins'},
+                                   {'index': 17, 'instruction': 'Faire un test Short pour vérifier les micro switch des CPs'},
+                                   {'index': 18, 'instruction': 'Faire les fonctionnalité des LEDs'},
+                                   {'index': 19, 'instruction': 'Tester la fonctionnalité des détecteurs de couleur'},
+                                   {'index': 20, 'instruction': 'Vérifier la fonctionnalité du tampon et l’état du l’encre'},
+                                   {'index': 21, 'instruction': 'Vérifier le bon branchement des fils de la mise à terre'}
+                               ]
+                           }
+                       ]
+                   },
+                   {
+                       'group': 'BF',
+                       'subgroups': [
+                           {
+                               'subgrouptitle': 'Table du Test',
+                               'instructions': [
+                                   {'index': 1, 'instruction': 'Faire le Nettoyage de l’équipement'},
+                                   {'index': 2, 'instruction': 'Vérifier la fixation, l’endomagementet le rangement des cables et les tuyeaux'},
+                                   {'index': 3, 'instruction': 'Vérifier que la pression d’air d’entré est de 6 bars (fuites doivent être éliminées)'},
+                                   {'index': 4, 'instruction': 'Vérifier la fonctionalité du lecteur code à barre'},
+                                   {'index': 5, 'instruction': 'Vérifier la fonctionnalité de l\'éclairage de la caméra'},
+                                   {'index': 6, 'instruction': 'Vérifier la propreté et la fixation de la lentille de la caméra'},
+                                   {'index': 7, 'instruction': 'Accéder au dossier des photos prises par la caméra et vérifier la qualité des dernières photos prises'},
+                                   {'index': 8, 'instruction': 'Vérifier la fonctionalité des detecteurs magnétiques (S\'ils existent)'},
+                                   {'index': 9, 'instruction': 'Vérifier la fonctionalité des points de detection de l’insertion des fusibles'},
+                                   {'index': 10, 'instruction': 'Vérifier la fixation de toutes les parties mécaniques'},
+                                   {'index': 11, 'instruction': 'Tester le bon fonctionnement de la fonction "Bonne insertion" en faisant une simulation avec des relais et fusibles non complétement inséré et vérifier la détection de la non insertion'},
+                                   {'index': 12, 'instruction': 'Vérifier le bon branchement des fils de la mise à terre'}
+                               ]
+                           }
+                       ]
+                   },
+                   {
+                       'group': 'PT',
+                       'subgroups': [
+                           {
+                               'subgrouptitle': 'Points génériques',
+                               'instructions': [
+                                   {'index': 1, 'instruction': 'Faire le nettoyage de l\'intérieur et l\'extérieur de l’imprimante'},
+                                   {'index': 2, 'instruction': 'Faire un test du clavier'},
+                                   {'index': 3, 'instruction': 'Assurer la fixation du capot de la machine et des pieds en plastique'}
+                                   
+                               ]
+                           },
+                           {
+                               'subgrouptitle': 'Mécanisme de transmission de l’étiquette',
+                               'instructions': [
+   		{'index': "SP", 'instruction': 'SP'},
+                                   {'index': 4, 'instruction': 'Vérifier l\'Enrouleur des étiquettes "L" et la fixation du disque "K"'},
+                                   {'index': 5, 'instruction': 'Vérifier l\'enrouleur du Ruban'},
+                                   {'index': 6, 'instruction': 'Vérifer la Photocellule "I"'},
+                                   {'index': 7, 'instruction': 'Vérifier le mécanisme de pression "H"'},
+                                   {'index': 8, 'instruction': 'Vérifier le distributeur des étiquettes "N"'},
+                                   {'index': 9, 'instruction': 'Vérifier les accessoires de guidage "J"'},
+                                   {'index': 10, 'instruction': 'Vérifier la rête thermique "D" (Tous les segments sont visibles après un test d’impression)'},
+                                   {'index': 11, 'instruction': 'Vérifier la mécanisme de fixation de la tête thermique "E"'}
+                               ]
+                           }
+                       ]
+                   },
+                   {
+                       'group': 'JB',
+                       'subgroups': [
+                           {
+                               'subgrouptitle': 'Points à vérifier durant la maintenance préventive périodique',
+                               'instructions': [
+                                   {'index': 1, 'instruction': 'Vérifiez si les jigboards sont bien fixés et ne bougent pas'},
+                                   {'index': 2, 'instruction': 'Vérifier si tous les trous sont fermés'},
+                                   {'index': 3, 'instruction': 'Vérifiez si les jigboards sont propres, pas de poussière'},
+                                   {'index': 4, 'instruction': 'Informations visuelles\nVérifier si les dessins et les symboles de l\'aide imprimés sur le dessin-layout sont lisibles, pas d\'endommagement'},
+                                   {'index': 5, 'instruction': 'Vérification générale de tous les outils jig\n- Tous les outils des jigs doivent correspendre à leurs codes sur le dessin Lay out\n- Tous les outils jig doivent être bien fixés (Aucun desserage n\'est autorisé)\n- Vérifier s\'il n\'y a aucun endommagement, aucune cassure et aucune arête vive\n- Tous les outils doivent être fixés perpendiculairement sur le jig-board (avec un angle de 90 degrés)'},
+                                   {'index': 6, 'instruction': 'Vérifier toutes les fourches (fixes et rabattables(Updown))\n- Les pins et les support pins doivent être droits (pas d\'inclinaison)\n- Les fourches rabattable (updown) doivent fonctionner correctement'},
+                                   {'index': 7, 'instruction': 'Vérifier tous les pin fourches connecteurs (fixe et rabattable -fall down forks-)\n- Tous les pins doivent avoir des stoppers et des arrières-connecteurs\n- Tous les pins doivent être droits et Il ne manque aucun pin\n- Les fourche rabattable (fall down) doivent fonctionner correctement'},
+                                   {'index': 8, 'instruction': 'Vérifier toutes les contres-pièces des connecteurs, grommets et Protecteurs\n-Vérifier s\'il n\'y a pas de poussière à l\'intérieur des contres-pièces\n-Vérifier si le dispositif de verrouillage (Stopper) fonctionne correctement\n- Vérifier le bon serrage des vis'},
+                                   {'index': 9, 'instruction': 'Vérifier tous les clip holders\n- Orientation correcte\n- Les support doivent être droits'},
+                                   {'index': 10, 'instruction': 'Vérifier toutes les languettes (Indicators)\n-Toutes les longuettes doivent être droites'},
+                                   {'index': 11, 'instruction': 'Vérifier tous les séparateurs (wire holder)\n- Les pins doivent fonctionner correctement'}
+                               ]
+                           }
+                       ]
+                   },
+                   {
+                       'group': 'VS',
+                       'subgroups': [
+                           {
+                               'subgrouptitle': 'Table du Test',
+                               'instructions': [
+                                   {'index': 1, 'instruction': 'Faire le Nettoyage de l’équipement (Tables & CPs)'},
+                                   {'index': 2, 'instruction': 'Vérifier la fixation, l’endomagement et le rangement des cables et les tuyeaux'},
+                                   {'index': 3, 'instruction': 'Vérifier que la pression d’air d’entré est de 6 bars (fuites doivent être éliminées)'},
+                                   {'index': 4, 'instruction': 'Vérifier la fonctionalité du lecteur code à barre'},
+                                   {'index': 5, 'instruction': 'Vérifier l’éclairage à l’intérieur et à l’extérieur du TE'},
+                                   {'index': 6, 'instruction': 'Vérifier l’état de la plaque (plate surface) & Numérotation de la CP'},
+                                   {'index': 7, 'instruction': 'Vérifier la fixation l\'usure et la fonctionnalité du module de la sélection de l’outil'},
+                                   {'index': 8, 'instruction': 'Vérifier l’onduleur (Fonctionne au minimum 5 min)'}
+                               ]
+                           },
+                           {
+                               'subgrouptitle': 'Test Caméra et les détecteurs',
+                               'instructions': [
+                                   {'index': 9, 'instruction': 'Vérifier la fixation, l\'usure et la fonctionnalité des capteurs de proximité (S\'ils existent)'},
+                                   {'index': 10, 'instruction': 'Vérifier la propreté et la fixation de la lentille de la caméra'},
+                                   {'index': 11, 'instruction': 'Accéder au dossier des photos prises par la caméra et vérifier la qualité des dernières photos prises'},
+                                   {'index': 12, 'instruction': 'Vérifier la fixation, l\'usure et la fonctionnalité des maintiens des Contres-pièces'},
+                                   {'index': 13, 'instruction': 'Vérifier la présence, le niveau, le serrage et le type de pins de toutes les CPs'},
+                                   {'index': 14, 'instruction': 'Tester le bon fonctionnement des pins et des switchs de detection'}
+                               ]
+                           },
+                           {
+                               'subgrouptitle': 'Test de la visseuse',
+                               'instructions': [
+                                   {'index': 15, 'instruction': 'Vérifier le serrage de toutes les Vis de la visseuse'},
+                                   {'index': 16, 'instruction': 'Vérifier l\'état et le fonctionnement des capteurs linéaires et angulaires (S\'ils existent)'},
+                                   {'index': 17, 'instruction': 'Vérifier la fixation et l\'état du coffret de la visseuse (Afficheur, Boutons)'},
+                                   {'index': 18, 'instruction': 'Vérifier la fonctionnalité des LEDs et du bouton poussoir de la broche'},
+                                   {'index': 19, 'instruction': 'Vérifier le support de la broche (Visseuse) et la pince de fixation (Pas d\'endommagement)'},
+                                   {'index': 20, 'instruction': 'Faire un test de vissage et de dévissage et contôler le fonctionnement en mode normal (pas de bruit ou température excessive au niveau la broche de la visseuse'},
+                                   {'index': 21, 'instruction': 'Contrôler la date de calibrage de la broche'},
+                                   {'index': 22, 'instruction': 'Vérifier le bon branchement des fils de la mise à terre'}
+                               ]
+                           }
+                       ]
+                   }
+               ]
+   
+           
+   
+               
+               if (response.order[0].extention !== null) {
+   
+               
+               const teGroup = DefaultExtensions.find(obj => obj.group === response.order[0].extention.extention_path);
+               const subgroups = teGroup ? teGroup.subgroups : [];
+               
+               
+                   
+   
+   
+   
+   
+               $('#extentiontable').empty();
+   
+               subgroups.forEach(function(subgroup, idxextg) {
+                   extobjsubmitted.push({ comms: [] , value: [] });
+                   const subgroupextName = subgroup.subgrouptitle;
+                   const subgroupextInstructions = subgroup.instructions;
+               
+                   const extrow = $('<tr></tr>');
+                   const procedureNameElement = $('<strong></strong>').text(subgroupextName);
+                   extrow.append(procedureNameElement);
+               
+                   const extsubtable = $('<table></table>')
+                       .css('width', '99%')
+                       .addClass('table table-hover');
+                   const subexttbody = $('<tbody></tbody>');
+               
+                   subgroupextInstructions.forEach(function(instruction, idxextl) {
+                      
+   
+                           if (typeof instruction.index === 'number') {
+                             const tr = $('<tr></tr>');
+                             tr.append($('<td></td>').text(instruction.index))
+                               .css('width', '50px');
+                             tr.append($('<td></td>').text(instruction.instruction));
+                         
+                             const buttColumn = $('<td></td>')
+                               .css('width', '158px');
+                         
+                             const radioOk = $('<input>')
+                               .attr('type', 'radio')
+                               .addClass('btn-check btn-sm')
+                               .attr('name', 'But_' + idxextg+'_'+idxextl)
+                               .attr('id', 'ok_' + idxextg+'_'+idxextl)
+                               .attr('autocomplete', 'off')
+                               .val(3);
+                             const labelOk = $('<label></label>')
+                               .addClass('btn btn-outline-success btn-sm')
+                               .attr('for', 'ok_' + idxextg+'_'+idxextl)
+                               .text('OK');
+                             const radioNok = $('<input>')
+                               .attr('type', 'radio')
+                               .addClass('btn-check btn-sm')
+                               .attr('name', 'But_' + idxextg+'_'+idxextl)
+                               .attr('id', 'nok_' + idxextg+'_'+idxextl)
+                               .attr('autocomplete', 'off')
+                               .val(2);
+                             const labelNok = $('<label></label>')
+                               .addClass('btn btn-outline-danger btn-sm')
+                               .attr('for', 'nok_' + idxextg+'_'+idxextl)
+                               .text('NOK');
+                             const radioNa = $('<input>')
+                               .attr('type', 'radio')
+                               .addClass('btn-check btn-sm')
+                               .attr('name', 'But_' + idxextg+'_'+idxextl)
+                               .attr('id', 'na_' + idxextg+'_'+idxextl)
+                               .attr('autocomplete', 'off')
+                               .val(1);
+                             const labelNa = $('<label></label>')
+                               .addClass('btn btn-outline-warning btn-sm')
+                               .attr('for', 'na_' + idxextg+'_'+idxextl)
+                               .text('N/A');
+                         
+                             labelNa.css('margin-left', '3px');
+                             labelNok.css('margin-left', '3px');
+                         
+                             buttColumn.append(radioOk)
+                               .append(labelOk)
+                               .append(radioNok)
+                               .append(labelNok)
+                               .append(radioNa)
+                               .append(labelNa);
+                         
+                             const tdTextarea = $('<td></td>')
+                               .css('width', '400px');
+                         
+                             const textarea = $('<textarea></textarea>')
+                               .attr('rows', '1')
+                               .addClass('full-width-textarea')
+                               .attr('name', 'textarea_' + idxextg +'_' +idxextl)
+                               .css('width', '100%')
+                               .css('resize', 'none')
+                               .css('height', 'auto');
+   
+   
+                               
+                         
+                             tdTextarea.append(textarea);
+                         
+                             tr.append(buttColumn);
+                             tr.append(tdTextarea);
+                         
+                             subexttbody.append(tr);
+                           }
+   
+                            else if (instruction.index === 'SP') {
+                           const tr = $('<tr></tr>');
+                           tr.append($('<td></td>').text(""));
+                           const picture = $('<img>')
+                           .attr('src', '/static/media/OPDzEH0q.png')
+                           .attr('alt', 'Image')
+                           .css('width', '80%');
+                           tr.append($('<td></td>').append(picture));
+                           tr.append($('<td></td>').text(""));
+                           tr.append($('<td></td>').text(""));
+                           
+                           subexttbody.append(tr);
+                         }
+                         
+   
+                         
+                         
+                         
+                   });
+               
+                   extsubtable.append(subexttbody);
+                   extrow.append(extsubtable);
+                   $('#extentiontable').append(extrow);
+               });
+               
+   
+                
+           } else { 
+               $('#extentiontable').closest('.card').hide();
+           }
+   
+   
+   
+           })
+           .fail(function(xhr, errmsg, err) {
+               console.log(errmsg);
+           });
+   
+   
+       $('#instructionstable').on('change', 'textarea', function() {
+           const idg = $(this).attr('name').split('_')[1];
+           const textareaValue = $(this).val();
+           objsubmitted[idg].value = textareaValue;
+           console.log(objsubmitted);
+       });
+       
+   
+   
+   
+       
+       $('#instructionstable').on('change', 'input[type="radio"]', function() {
+           const idg = $(this).attr('name').split('_')[1];
+           const idl = $(this).attr('name').split('_')[2];
+           const selectedValue = $(this).val();
+           objsubmitted[idg].value[idl] = selectedValue;
+       });
+   
+       
+   
+   
+       $('#extentiontable').on('change', 'textarea', function() {
+           const idextg = $(this).attr('name').split('_')[1];
+           const idextl = $(this).attr('name').split('_')[2];
+           const exttextareaextValue = $(this).val();
+           extobjsubmitted[idextg].comms[idextl] = exttextareaextValue;
+       });
+       
+   
+       $('#extentiontable').on('change', 'input[type="radio"]', function() {
+           const idextg = $(this).attr('name').split('_')[1];
+           const idextl = $(this).attr('name').split('_')[2];
+           const extselectedValue = $(this).val();
+           extobjsubmitted[idextg].value[idextl] = extselectedValue;
+       });
+   
+   
+   
+   
+   
+   
+   
+       $('#submit-button').click(function() {
+           const operationGroups = $('#instructionstable').find('table');
+           const operationextGroups = $('#extentiontable').find('table');
+           let isSelectionValid = true;
+       
+           operationGroups.each(function(indxg, operationGroup) {
+               const rows = $(operationGroup).find('tr');
+       
+               rows.each(function(indxl, row) {
+                   const operationButtons = $(row).find('input[type="radio"]:checked');
+                   if (operationButtons.length === 0) {
+                       isSelectionValid = false;
+                       return false; 
+                   }
+               });
+           });
+       
+   
+           operationGroups.each(function(indxg, operationGroup) {
+               const rows = $(operationGroup).find('tr');
+       
+               rows.each(function(indxl, row) {
+                   const operationButtons = $(row).find('input[type="radio"]:checked');
+                   if (operationButtons.length === 0) {
+                       isSelectionValid = false;
+                       return false; 
+                   }
+               });
+           });
+   
+   
+   
+   
+           if (!isSelectionValid) {
+                alert("Veuillez rensigné tous les champs obligatoires.");
+               return; 
+           }
+       
+           form_Data
+           
+           submitOrder(objsubmitted, orderId, orderRef)
+               .done(function(response) {
+                   if (response.success) {
+                       
+                   } else {
+                    
+                   }
+               })
+               .fail(function(xhr, status, error) {
+                   console.log(xhr.responseText);
+               });
+       });
+       
+   
+   
+   
+   
+       $('#cancel-button').click(function() {
+   
+           window.location.href = '/select';
+   
+               
+       });
+   
+   
+   
+   });
+</script>
+</html>

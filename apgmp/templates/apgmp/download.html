@@ -1,0 +1,131 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Maintenance Management</title>
+   
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+  
+    <style>
+
+        
+        #orderTable tbody tr:hover {
+            background-color: #E7E7F1;
+        }
+
+
+        .clickable-row {
+            cursor: pointer; /* Change the cursor style to pointer */
+        }
+
+    </style>
+</head>
+
+
+
+<body style="background-color: #C2DEDC;">
+
+
+    <div class="mainwrapper">
+
+
+        <div class="grid-container">
+            <div class="column">
+                <div class="card border-dark mt-2 ms-2 me-2">
+                </div>
+            </div>
+        
+
+            
+        <div class="pagewrapper">
+            <div class="column">
+                <div class="card border-dark mt-2 ms-2 me-2 mb-4">
+                    <div class="card-header">Maintenance Orders</div>
+
+
+                    <table id="orderTable"  style="width: 99.5%; margin-left: 0.5%;">
+                        <thead>
+                            <tr>
+                                <th>Equipment</th>
+                                <th>Functional Location</th>
+                                <th>Type</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+
+
+                        <tbody>
+
+                        </tbody>
+                    </table>
+
+
+                    </div>
+                </div>                 
+                        
+            </div>
+        </div>
+</body>
+
+
+
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script></script>
+
+
+    <script>
+        
+        
+        $(document).ready(function() {
+            $.ajax({
+                url: '/order_load/',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    const tableBody = $('#orderTable tbody');
+                    const workorders = response.workorders;
+        
+                    workorders.sort(function(a, b) {
+                        if (a.functlocation < b.functlocation) return -1;
+                        if (a.functlocation > b.functlocation) return 1;
+
+                        if (a.equipment < b.equipment) return -1;
+                        if (a.equipment > b.equipment) return 1;
+        
+                        return 0;
+                    });
+        
+                    $.each(workorders, function(index, workorder) {
+                        const row = $('<tr>').click(function() {
+                            window.location.href = '/orderform/' + workorder.orderref + '/' + workorder.id + '/';
+                        }).addClass('clickable-row');
+        
+                        row.append($('<td>').text(workorder.equipment.split(' ')[1]));
+                        row.append($('<td>').text(workorder.functlocation.split(' ')[0]));
+                        row.append($('<td>').text(workorder.wordertype.split(' ')[0]));
+                        row.append($('<td>').text(workorder.enddate));
+        
+                        tableBody.append(row);
+                    });
+                },
+                error: function(xhr, errmsg, err) {
+                    console.log(errmsg);
+                }
+            });
+        });
+        
+    </script>
+
+
+</html>
+
+
+
+
+

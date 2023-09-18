@@ -1,0 +1,598 @@
+
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Maintenance Management</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <style>
+        
+        #CurOrderTable tbody tr:hover {
+            background-color: #E7E7F1;
+        }
+
+        
+        #ExpOrderTable tbody tr:hover {
+            background-color: #E7E7F1;
+        }
+
+
+        .clickable-row {
+            cursor: pointer; /* Change the cursor style to pointer */
+        }
+
+    </style>
+</head>
+
+
+
+<body style="background-color: #C2DEDC;">
+
+
+    <div class="mainwrapper">
+
+
+      <div class="grid-container">
+
+            
+        <div class="column">
+              
+            {% include 'apgmp/navbar.html' %}
+
+            
+    </div>
+
+            
+        <div class="pagewrapper">
+            <div class="column">
+
+
+                <div class="card border-dark mt-2 ms-2 me-2 mb-4">
+                    <div class="card-header">
+                        
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="RED" class="bi bi-exclamation-triangle-fill" viewBox="0 0 20 20">
+                      </svg>
+                        Ordres de maintenance de la semaine :
+                    </div>
+                    
+                      
+                    <table id="CurOrderTable"  style="width: 99.5%; margin-left: 0.5%; margin-bottom: 1%;">
+                        <thead>
+                            <tr>
+                                <th>Équipement</th>
+                                <th>Localisation fonctionnelle</th>
+                                <th>Type</th>
+                                <th>Échéance</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                        </tbody>
+                    </table>
+
+
+      
+                    <div>
+                      <ul class="pagination pagination-sm justify-content-center" id="pagination-cur-controls">
+                      </ul>
+                    </div>
+                    
+
+                    </div>
+                </div>  
+                
+                
+
+
+                <div class="card border-dark mt-2 ms-2 me-2 mb-4">
+                    <div class="card-header">
+
+                        
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="RED" class="bi bi-exclamation-triangle-fill" viewBox="0 0 20 20">
+                            <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                          </svg>
+                          Ordres de maintenance en retard :
+                    </div>
+
+
+                    <table id="ExpOrderTable"  style="width: 99.5%; margin-left: 0.5%; margin-bottom: 1%;">
+                        <thead>
+
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+
+
+      
+                    <div>
+                      <ul class="pagination pagination-sm justify-content-center" id="pagination-exp-controls">
+                      </ul>
+                    </div>
+                    
+
+                    </div>
+                </div>  
+
+                
+                        
+            </div>
+        </div>
+</body>
+
+
+
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script></script>
+
+
+    <script>
+
+
+      
+      let currentCurPage = 1;
+      let totalCurPages; 
+      let currentCurSortColumn = 'week';
+      let ascendingCurOrder = true; //
+    
+      
+      let currentExpPage = 1;
+      let totalExpPages; 
+      let currentExpSortColumn = 'week';
+      let ascendingExpOrder = true; //
+    
+
+
+
+      function updateExpTable(sortingExpParameter) {
+         const headers = [
+            { text: 'Équipement', parameter: 'equipment__nomenclature' },
+            { text: 'Localisation fonctionnelle', parameter: 'equipment__functlocation' },
+            { text: 'Type', parameter: 'ordertype' },
+            { text: 'Échéance', parameter: 'enddate' }
+        ];
+
+         const expOrderstableHead = $('#ExpOrderTable thead');
+        expOrderstableHead.empty();
+
+         const headerRow = $('<tr>');
+        headers.forEach(header => {
+            const th = $('<th>');
+            const headerLink = $('<a>')
+                .attr('href', '#')
+                .data('sort', header.parameter)
+                .text(header.text)
+                .css('text-decoration', 'none')  
+                .css('color', 'black')  
+                .click(function() {
+                  
+                if (currentExpSortColumn === header.parameter) {
+                    ascendingExpOrder = !ascendingExpOrder;  
+                    
+                } else {
+                  currentExpSortColumn = header.parameter;
+                  ascendingExpOrder = true;
+                }
+
+
+              
+                fetchAndPopulateExpOrders(currentExpPage, headerLink.data('sort'), ascendingExpOrder);
+           
+
+
+                
+                });
+
+            
+                console.log(currentExpSortColumn)
+
+            th.append(headerLink);
+            headerRow.append(th);
+        });
+
+        expOrderstableHead.append(headerRow);
+
+        fetchAndPopulateExpOrders(1, sortingExpParameter, ascendingExpOrder);
+      }
+
+
+      function fetchAndPopulateExpOrders(pageNumber,sortingParameter, ascendingOrder) {
+        $.ajax({
+          url: '/reduced_orders_load_to_expired_selector/',
+          type: 'GET',
+          data: { page: pageNumber , sort: sortingParameter, sortorder: ascendingOrder ? 'asc' : 'desc' },
+          dataType: 'json',
+          success: function(response) {
+            orders = response.orders; 
+            totalPages=response.total_pages;
+            
+            updateExpPaginationControls(pageNumber,totalPages)
+    
+    
+            const expOrderstableBody = $('#ExpOrderTable tbody');
+            expOrderstableBody.empty(); 
+    
+            
+          if (orders.length === 0) {
+            const noOrdersRow = $('<tr>');
+            const noOrdersCell = $('<td>')
+              .attr('colspan', '6')
+              .css('text-align', 'center')
+              .css('font-style', 'italic')
+              .text('Pas de consigne disponible');
+            noOrdersRow.append(noOrdersCell);
+            expOrderstableBody.append(noOrdersRow);
+          } else {
+    
+            $.each(orders, function(index, order) {
+              const row = $('<tr>').click(function() {
+                window.location.href =
+                  '/orderform/' + order.orderref + '/' + order.id + '/';
+              }).addClass('clickable-row');
+              
+    
+    
+              row.append($('<td>').text(order.equipment.nomenclature));
+              row.append($('<td>').text(order.equipment.functlocation));
+              row.append($('<td>').text(order.ordertype.split(' ')[0]));
+              row.append($('<td>').text(order.enddate));
+      
+    
+    
+     
+        
+              expOrderstableBody.append(row);
+            });
+    
+    
+    
+          }
+    
+    
+          },
+          error: function(xhr, errmsg, err) {
+            console.log(errmsg);
+          }
+        });
+      }
+    
+    
+    
+      function updateExpPaginationControls(current_page, total_pages) {
+        
+        const paginationExpControls = $('#pagination-exp-controls');
+        paginationExpControls.empty();
+    
+        
+        
+        if (total_pages === 1) {
+          paginationExpControls.hide();
+        } else {
+          paginationExpControls.empty();
+          paginationExpControls.show(); 
+        
+        }
+     
+    
+    
+        const ul = $('<ul>').addClass('pagination');
+        const prevClass = current_page === 1 ? 'disabled' : '';
+        const nextClass = current_page === total_pages ? 'disabled' : '';
+      
+        const prevLink = $('<a>')
+          .addClass('page-link')
+          .attr('href', `?page=${current_page - 1}`)
+          .text('<<');
+      
+        const prevItem = $('<li>')
+          .addClass(`page-item ${prevClass}`)
+          .append(prevLink);
+      
+        ul.append(prevItem);
+      
+        if (total_pages <= 7) {
+          for (let page = 1; page <= total_pages; page++) {
+            ul.append(createPageItem(page, current_page));
+          }
+        } else if (current_page - 2 <= 2) {
+          for (let page = 1; page <= 6; page++) {
+            ul.append(createPageItem(page, current_page));
+          }
+          ul.append(createEllipsisItem());
+          ul.append(createPageItem(total_pages));
+        } else if (current_page + 2 >= total_pages) {
+          ul.append(createPageItem(1, current_page));
+          ul.append(createEllipsisItem());
+          for (let page = total_pages - 5; page <= total_pages; page++) {
+            ul.append(createPageItem(page, current_page));
+          }
+        } else {
+          ul.append(createPageItem(1));
+          ul.append(createEllipsisItem());
+          for (let page = current_page - 2; page <= current_page + 2; page++) {
+            ul.append(createPageItem(page, current_page));
+          }
+          ul.append(createEllipsisItem());
+          ul.append(createPageItem(total_pages));
+        }
+      
+        const nextLink = $('<a>')
+          .addClass('page-link')
+          .attr('href', `?page=${current_page + 1}`)
+          .text('>>');
+      
+        const nextItem = $('<li>')
+          .addClass(`page-item ${nextClass}`)
+          .append(nextLink);
+      
+        ul.append(nextItem);
+      
+        paginationExpControls.append(ul);
+      }
+      
+    
+    
+
+ 
+
+
+
+    
+
+    function updateCurTable(sortingCurParameter) {
+       const headers = [
+          { text: 'Équipement', parameter: 'equipment__nomenclature' },
+          { text: 'Localisation fonctionnelle', parameter: 'equipment__functlocation' },
+          { text: 'Type', parameter: 'ordertype' },
+          { text: 'Échéance', parameter: 'enddate' }
+      ];
+
+       const curOrderstableHead = $('#CurOrderTable thead');
+      curOrderstableHead.empty();
+
+       const headerRow = $('<tr>');
+      headers.forEach(header => {
+          const th = $('<th>');
+          const headerLink = $('<a>')
+              .attr('href', '#')
+              .data('sort', header.parameter)
+              .text(header.text)
+              .css('text-decoration', 'none') 
+              .css('color', 'black')  
+              .click(function() {
+                
+              if (currentCurSortColumn === header.parameter) {
+                  ascendingCurOrder = !ascendingCurOrder;  
+                  
+              } else {
+                currentCurSortColumn = header.parameter;
+                ascendingCurOrder = true;
+              }
+
+
+            
+              fetchAndPopulateCurOrders(currentCurPage, headerLink.data('sort'), ascendingCurOrder);
+         
+
+
+              
+              });
+
+          
+              console.log(currentCurSortColumn)
+
+          th.append(headerLink);
+          headerRow.append(th);
+      });
+
+      curOrderstableHead.append(headerRow);
+
+      fetchAndPopulateCurOrders(1, sortingCurParameter, ascendingCurOrder);
+    }
+
+
+    function fetchAndPopulateCurOrders(pageNumber,sortingParameter, ascendingOrder) {
+      $.ajax({
+        url: '/reduced_orders_load_to_current_selector/',
+        type: 'GET',
+        data: { page: pageNumber , sort: sortingParameter, sortorder: ascendingOrder ? 'asc' : 'desc' },
+        dataType: 'json',
+        success: function(response) {
+          orders = response.orders; 
+          totalPages=response.total_pages;
+          
+          updateCurPaginationControls(pageNumber,totalPages)
+  
+  
+          const curOrderstableBody = $('#CurOrderTable tbody');
+          curOrderstableBody.empty(); 
+  
+          
+        if (orders.length === 0) {
+          const noOrdersRow = $('<tr>');
+          const noOrdersCell = $('<td>')
+            .attr('colspan', '6')
+            .css('text-align', 'center')
+            .css('font-style', 'italic')
+            .text('Pas de consigne disponible');
+          noOrdersRow.append(noOrdersCell);
+          curOrderstableBody.append(noOrdersRow);
+        } else {
+  
+          $.each(orders, function(index, order) {
+            const row = $('<tr>').click(function() {
+              window.location.href =
+                '/orderform/' + order.orderref + '/' + order.id + '/';
+            }).addClass('clickable-row');
+            
+  
+  
+            row.append($('<td>').text(order.equipment.nomenclature));
+            row.append($('<td>').text(order.equipment.functlocation));
+            row.append($('<td>').text(order.ordertype.split(' ')[0]));
+            row.append($('<td>').text(order.enddate));
+    
+  
+  
+   
+      
+            curOrderstableBody.append(row);
+          });
+  
+  
+  
+        }
+  
+  
+        },
+        error: function(xhr, errmsg, err) {
+          console.log(errmsg);
+        }
+      });
+    }
+  
+  
+  
+    function updateCurPaginationControls(current_page, total_pages) {
+      
+      const paginationCurControls = $('#pagination-cur-controls');
+      paginationCurControls.empty();
+  
+      
+      
+      if (total_pages === 1) {
+        paginationCurControls.hide();
+      } else {
+        paginationCurControls.empty();
+        paginationCurControls.show(); 
+      
+      }
+   
+  
+  
+      const ul = $('<ul>').addClass('pagination');
+      const prevClass = current_page === 1 ? 'disabled' : '';
+      const nextClass = current_page === total_pages ? 'disabled' : '';
+    
+      const prevLink = $('<a>')
+        .addClass('page-link')
+        .attr('href', `?page=${current_page - 1}`)
+        .text('<<');
+    
+      const prevItem = $('<li>')
+        .addClass(`page-item ${prevClass}`)
+        .append(prevLink);
+    
+      ul.append(prevItem);
+    
+      if (total_pages <= 7) {
+        for (let page = 1; page <= total_pages; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+      } else if (current_page - 2 <= 2) {
+        for (let page = 1; page <= 6; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+        ul.append(createEllipsisItem());
+        ul.append(createPageItem(total_pages));
+      } else if (current_page + 2 >= total_pages) {
+        ul.append(createPageItem(1, current_page));
+        ul.append(createEllipsisItem());
+        for (let page = total_pages - 5; page <= total_pages; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+      } else {
+        ul.append(createPageItem(1));
+        ul.append(createEllipsisItem());
+        for (let page = current_page - 2; page <= current_page + 2; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+        ul.append(createEllipsisItem());
+        ul.append(createPageItem(total_pages));
+      }
+    
+      const nextLink = $('<a>')
+        .addClass('page-link')
+        .attr('href', `?page=${current_page + 1}`)
+        .text('>>');
+    
+      const nextItem = $('<li>')
+        .addClass(`page-item ${nextClass}`)
+        .append(nextLink);
+    
+      ul.append(nextItem);
+    
+      paginationCurControls.append(ul);
+    }
+    
+  
+  
+
+
+    
+
+  
+
+
+      function createPageItem(page, current_page) {
+        const pageLink = $('<a>')
+          .addClass('page-link')
+          .attr('href', `?page=${page}`)
+          .text(page);
+      
+        return $('<li>')
+          .addClass(`page-item ${current_page === page ? 'active' : ''}`)
+          .append(pageLink);
+        }
+    
+    
+    
+      function createEllipsisItem() {
+        return $('<li>')
+          .addClass('page-item disabled')
+          .text('..');
+      }
+      
+    
+
+
+      
+      $(document).ready(function() {
+        console.log(currentExpPage)
+        updateExpTable('week')
+        updateCurTable('week')
+      });
+    
+    
+
+		$(document).on('click', '#pagination-exp-controls .pagination a', function(e) {
+			e.preventDefault();
+			const currentExpPage = parseInt($(this).attr('href').split('=')[1]);
+      console.log(ascendingExpOrder)
+			fetchAndPopulateExpOrders(currentExpPage,currentExpSortColumn,ascendingExpOrder);
+
+
+      
+		});
+ 
+		$(document).on('click', '#pagination-cur-controls .pagination a', function(e) {
+			e.preventDefault();
+			const currentCurPage = parseInt($(this).attr('href').split('=')[1]);
+			fetchAndPopulateCurOrders(currentCurPage,currentCurSortColumn,ascendingCurOrder);
+		});
+
+    </script>
+
+
+</html>
+
+
+

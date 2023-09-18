@@ -1,0 +1,377 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Maintenance Management</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    {% include 'apgmp/fequipment.html' %}
+    <style>
+        
+        #EquipmentsTable tbody tr:hover {
+            background-color: #E7E7F1;
+        }
+
+        .cntrlswrapper {
+            margin-left:10px;
+            margin-right:10px;
+            margin-top:5px;
+            display: flex;
+            justify-content: right;
+            align-items: right;
+        }
+
+        .clickable-row {
+            cursor: pointer; /* Change the cursor style to pointer */
+        }
+
+    </style>
+</head>
+
+
+
+<body style="background-color: #C2DEDC;">
+
+
+    <div class="mainwrapper">
+
+
+      <div class="grid-container">
+
+            
+        <div class="column">
+              
+            {% include 'apgmp/navbar.html' %}
+
+            
+    </div>
+
+            
+        <div class="pagewrapper">
+            <div class="column">
+
+                <div class="cntrlswrapper">
+        
+                    <button class="btn btn-secondary custom-button" type="button" data-bs-toggle="offcanvas" data-bs-target="#fequipment" aria-controls="fequipment">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+                        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+                      </svg>
+                      </svg>
+                    </button>
+                  </div>
+
+
+
+
+                <div class="card border-dark mt-2 ms-2 me-2 mb-4">
+                    <div class="card-header">
+                        
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="RED" class="bi bi-exclamation-triangle-fill" viewBox="0 0 20 20">
+                      </svg>
+                        Ordres de maintenance de la semaine :
+                    </div>
+                    
+                      
+                    <table id="EquipmentsTable"  style="width: 99.5%; margin-left: 0.5%; margin-bottom: 3%;">
+                        <thead>
+ 
+                        </thead>
+
+
+                        <tbody>
+
+                        </tbody>
+                    </table>
+
+                    <div>
+                        <ul class="pagination pagination-sm justify-content-center" id="pagination-controls">
+                        </ul>
+                      </div>
+                      
+
+                    </div>
+                </div>  
+                
+                
+
+
+                
+                        
+            </div>
+        </div>
+</body>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    
+    
+
+<script>
+
+
+  
+    let equipments = []; 
+    let currentPage = 1;
+    let totalPages;
+    let filters = {}; 
+    
+  
+    let currentSortColumn = 'functlocation';
+    let ascendingEquipment = true;
+   
+  
+    function updateTable(sortingParameter) {
+      
+      const headers = [
+          { text: 'Équipement', parameter: 'nomenclature' },
+          { text: 'Réf. équipement', parameter: 'inventorynr' },
+          { text: 'Réf. inventaire	', parameter: 'inventoryref' },
+          { text: 'Loc. fonctionnelle', parameter: 'functlocation' }
+      ];
+  
+       const equipmentsTableHead = $('#EquipmentsTable thead');
+       equipmentsTableHead.empty();
+  
+       const headerRow = $('<tr>');
+      headers.forEach(header => {
+          const th = $('<th>');
+          const headerLink = $('<a>')
+              .attr('href', '#')
+              .data('sort', header.parameter)
+              .text(header.text)
+              .css('text-decoration', 'none') 
+              .css('color', 'black') 
+              .click(function() {
+                
+              if (currentSortColumn === header.parameter) {
+                  ascendingEquipment = !ascendingEquipment; 
+              } else {
+                currentSortColumn = header.parameter;
+                  ascendingEquipment = true;
+              }
+  
+              console.log(ascendingEquipment)
+            
+              fetchAndPopulateEquipments(currentPage,filters, headerLink.data('sort'), ascendingEquipment);
+         
+  
+  
+              
+              });
+  
+          th.append(headerLink);
+          headerRow.append(th);
+      });
+  
+      equipmentsTableHead.append(headerRow);
+  
+      fetchAndPopulateEquipments(1, filters , sortingParameter, ascendingEquipment);
+    }
+  
+  
+  
+  
+    function fetchAndPopulateEquipments(pageNumber, filters = {},sortingParameter, ascendingEquipment) {
+      $.ajax({
+        url: '/equipments_load/',
+        type: 'GET',
+        data: { page: pageNumber, ...filters , sort: sortingParameter, sortequipment: ascendingEquipment ? 'asc' : 'desc' },
+        dataType: 'json',
+        success: function(response) {
+          equipments = response.equipments; 
+          totalPages=response.total_pages;
+          
+          updatePaginationControls(pageNumber,totalPages)
+  
+        
+          const equipmentstableBody = $('#EquipmentsTable tbody');
+          equipmentstableBody.empty(); 
+  
+          
+        if (equipments.length === 0) {
+          const noEquipmentsRow = $('<tr>');
+          const noEquipmentsCell = $('<td>')
+            .attr('colspan', '6')
+            .css('text-align', 'center')
+            .css('font-style', 'italic')
+            .text('Pas de consigne disponible');
+          noEquipmentsRow.append(noEquipmentsCell);
+          equipmentstableBody.append(noEquipmentsRow);
+        } else {
+  
+          $.each(equipments, function(index, equipment) {
+            const row = $('<tr>').click(function() {
+                window.location.href =
+                  '/equipmentform/'  + equipment.id + '/' ;
+              }).addClass('clickable-row');
+                row.append($('<td>').text(equipment.nomenclature));
+                row.append($('<td>').text(equipment.inventorynr));
+                row.append($('<td>').text(equipment.inventoryref));
+                row.append($('<td>').text(equipment.functlocation));
+                equipmentstableBody.append(row);
+          });
+  
+  
+  
+        }
+  
+  
+        },
+        error: function(xhr, errmsg, err) {
+          console.log(errmsg);
+        }
+      });
+    }
+  
+  
+    function updatePaginationControls(current_page, total_pages) {
+      
+      const paginationControls = $('#pagination-controls');
+      paginationControls.empty();
+  
+      
+      
+      if (total_pages === 1) {
+        paginationControls.hide();
+      } else {
+        paginationControls.empty();
+        paginationControls.show(); 
+        
+      }
+   
+  
+  
+      
+  
+  
+  
+      const ul = $('<ul>').addClass('pagination');
+      const prevClass = current_page === 1 ? 'disabled' : '';
+      const nextClass = current_page === total_pages ? 'disabled' : '';
+    
+      const prevLink = $('<a>')
+        .addClass('page-link')
+        .attr('href', `?page=${current_page - 1}`)
+        .text('<<');
+    
+      const prevItem = $('<li>')
+        .addClass(`page-item ${prevClass}`)
+        .append(prevLink);
+    
+      ul.append(prevItem);
+    
+      if (total_pages <= 7) {
+        for (let page = 1; page <= total_pages; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+      } else if (current_page - 2 <= 2) {
+        for (let page = 1; page <= 6; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+        ul.append(createEllipsisItem());
+        ul.append(createPageItem(total_pages, current_page));
+      } else if (current_page + 2 >= total_pages) {
+        ul.append(createPageItem(1, current_page));
+        ul.append(createEllipsisItem());
+        for (let page = total_pages - 5; page <= total_pages; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+      } else {
+        ul.append(createPageItem(1, current_page));
+        ul.append(createEllipsisItem());
+        for (let page = current_page - 2; page <= current_page + 2; page++) {
+          ul.append(createPageItem(page, current_page));
+        }
+        ul.append(createEllipsisItem());
+        ul.append(createPageItem(total_pages, current_page));
+      }
+    
+      const nextLink = $('<a>')
+        .addClass('page-link')
+        .attr('href', `?page=${current_page + 1}`)
+        .text('>>');
+    
+      const nextItem = $('<li>')
+        .addClass(`page-item ${nextClass}`)
+        .append(nextLink);
+    
+      ul.append(nextItem);
+    
+      paginationControls.append(ul);
+    }
+    
+  
+  
+    function createPageItem(page, current_page) {
+      const pageLink = $('<a>')
+        .addClass('page-link')
+        .attr('href', `?page=${page}`)
+        .text(page);
+    
+      return $('<li>')
+        .addClass(`page-item ${current_page === page ? 'active' : ''}`)
+        .append(pageLink);
+    }
+  
+  
+  
+    function createEllipsisItem() {
+      return $('<li>')
+        .addClass('page-item disabled')
+        .text('..');
+    }
+    
+  
+    $(document).ready(function() {
+      updateTable();
+    });
+  
+  
+    
+    $(document).on('click', '.pagination a', function(e) {
+      e.preventDefault();
+      const currentPage = parseInt($(this).attr('href').split('=')[1]);
+      fetchAndPopulateEquipments(currentPage,filters,currentSortColumn,ascendingEquipment);
+    });
+  
+  
+  
+    window.addEventListener('filterDataChanged', function(event) {
+      const { inventorynr, nomenclature, functlocation, modelnumber, manufactserialnr, inventoryref} = event.detail;
+  
+      filters = {
+        inventorynr: inventorynr,
+        nomenclature: nomenclature,
+        functlocation: functlocation,
+        modelnumber: modelnumber,
+        manufactserialnr: manufactserialnr,
+        inventoryref: inventoryref,
+  
+      };
+      fetchAndPopulateEquipments(1, filters,'nomenclature','asc');
+  
+    });
+  
+   
+  </script>
+  
+  
+  
+
+  
+
+
+
+</html>
+
+
+
+
+
