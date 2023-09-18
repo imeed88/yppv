@@ -53,7 +53,8 @@ MIDDLEWARE = [
 ]
 
 
-CSRF_TRUSTED_ORIGINS = ['https://yppv-production.up.railway.app/']
+CSRF_TRUSTED_ORIGINS = ["https://yppv-production.up.railway.app",
+                       "http://yppv-production.up.railway.app",]
 
 
 ROOT_URLCONF = 'gmp.urls'
