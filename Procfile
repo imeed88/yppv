@@ -1,1 +1,1 @@
-web gunicorn gmp.wsgi --log-file -
+web: gunicorn gmp.wsgi --log-file -
